@@ -103,4 +103,10 @@ root.SetHandler(
     fileArg, sizeOpt
 );
 
+Command getFrameCountCmd = new("get-frame-count", "Get the number of frames contained within the image.");
+getFrameCountCmd.AddArgument(fileArg);
+getFrameCountCmd.SetHandler(file => Console.WriteLine(Image.Load(file.FullName).Frames.Count), fileArg);
+
+root.AddCommand(getFrameCountCmd);
+
 await root.InvokeAsync(args);
