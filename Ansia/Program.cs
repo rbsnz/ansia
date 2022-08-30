@@ -52,12 +52,19 @@ Option<Size> sizeOpt = new(
         + "\ncalculated to preserve the aspect ratio of the original image."
 );
 
+Option<int> frameOpt = new(
+    new[] { "-f", "--frame" },
+    () => 1,
+    "Specify which frame number to output."
+);
+
 RootCommand root = new("Converts an image to ANSI art.");
 root.AddArgument(fileArg);
 root.AddOption(sizeOpt);
+root.AddOption(frameOpt);
 
 root.SetHandler(
-    (file, size) =>
+    (file, size, frame) =>
     {
         // Load the image from the specified path
         Image<Rgba32> image = Image.Load<Rgba32>(file.FullName);
@@ -66,24 +73,26 @@ root.SetHandler(
         if (size.Width > 0 || size.Height > 0)
             image.Mutate(x => x.Resize(size));
 
+        ImageFrame<Rgba32> imageFrame = image.Frames[frame];
+
         // Iterate through pixel rows
         // Each cell displays 2 pixels:
         // - the foreground color for the top pixel (using the upper half block unicode character)
         // - the background color for the bottom pixel
-        for (int  y = 0; y < image.Height; y += 2)
+        for (int  y = 0; y < imageFrame.Height; y += 2)
         {
             // Iterate through pixel columns
-            for (int x = 0; x < image.Width; x++)
+            for (int x = 0; x < imageFrame.Width; x++)
             {
                 Rgba32 c;
 
                 // Begin format escape sequence
                 Console.Write($"{ANSI_ESC}[");
                 // Check if this row has a bottom pixel row
-                if ((y + 1) < image.Height)
+                if ((y + 1) < imageFrame.Height)
                 {
                     // Set background color (bottom pixel)
-                    c = image[x, y + 1];
+                    c = imageFrame[x, y + 1];
                     Console.Write($"48;2;{c.R};{c.G};{c.B};");
                 }
                 else
@@ -92,7 +101,7 @@ root.SetHandler(
                     Console.Write($"49;");
                 }
                 // Set foreground color (top pixel), end escape sequence and output the upper half block
-                c = image[x, y];
+                c = imageFrame[x, y];
                 Console.Write($"38;2;{c.R};{c.G};{c.B}m");
                 Console.Write($"{UPPER_HALF_BLOCK}");
             }
@@ -100,7 +109,7 @@ root.SetHandler(
             Console.WriteLine($"{ANSI_ESC}[0m");
         }
     },
-    fileArg, sizeOpt
+    fileArg, sizeOpt, frameOpt
 );
 
 Command getFrameCountCmd = new("get-frame-count", "Get the number of frames contained within the image.");
