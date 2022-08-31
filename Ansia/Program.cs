@@ -55,7 +55,6 @@ Option<Size> sizeOpt = new(
 
 Option<int> frameOpt = new(
     new[] { "-f", "--frame" },
-    () => 1,
     "Specify which frame number to output."
 );
 
