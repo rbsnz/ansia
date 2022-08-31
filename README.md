@@ -3,7 +3,7 @@ CLI tool that converts an image to ANSI art which can be displayed in a terminal
 
 ![image](https://user-images.githubusercontent.com/109945998/187438695-d97bbde5-63f1-41df-8935-4ab1ca8d4ec0.png)
 
-[Image by ReffPixels](https://commons.wikimedia.org/wiki/File:Pixel_art_portrait_of_a_cat.png) scaled to 64x64px. `magick convert cat.png -scale 64x64 cat.png`
+[Image by ReffPixels](https://commons.wikimedia.org/wiki/File:Pixel_art_portrait_of_a_cat.png)
 
 ## Usage
 
