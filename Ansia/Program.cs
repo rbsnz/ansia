@@ -26,7 +26,7 @@ Option<Size> sizeOpt = new(
     new[] { "-s", "--size" },
     (arg) =>
     {
-        string[] split = arg.Tokens.First().Value.Split('x');
+        string[] split = arg.Tokens[0].Value.Split('x');
         if (split.Length != 2)
         {
             arg.ErrorMessage = "Size must be of the format: [width]x[height].";
