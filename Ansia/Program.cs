@@ -19,7 +19,7 @@ ImmutableDictionary<string, IResampler> resamplerMap = typeof(KnownResamplers)
         StringComparer.OrdinalIgnoreCase
     );
 
-Argument<FileInfo> fileArg = new();
+Argument<FileInfo> fileArg = new("file", "The file path to the image.");
 fileArg = fileArg.ExistingOnly();
 
 Option<Size> sizeOpt = new(
@@ -39,29 +39,29 @@ Option<Size> sizeOpt = new(
         if (!string.IsNullOrWhiteSpace(strWidth) &&
             (!int.TryParse(strWidth, out width) || width < 0))
         {
-            arg.ErrorMessage = $"Invalid value specified for width: {strWidth}.";
+            arg.ErrorMessage = $"Invalid width: {strWidth}.";
             return default;
         }
 
         if (!string.IsNullOrWhiteSpace(strHeight) &&
             (!int.TryParse(strHeight, out height) || height < 0))
         {
-            arg.ErrorMessage = $"Invalid value specified for height: {strHeight}.";
+            arg.ErrorMessage = $"Invalid height: {strHeight}.";
             return default;
         }
 
         if (width == 0 && height == 0)
         {
-            arg.ErrorMessage = $"Width or height must be specified in the size.";
+            arg.ErrorMessage = $"A width or height must be specified for size.";
             return default;
         }
 
         return new(width, height);
     },
     description:
-        "The size of the output image in the format: '[width]x[height]'."
-        + "\nThe width or height may be left out, in which case it will be"
-        + "\ncalculated to preserve the aspect ratio of the original image."
+        "The size of the output image in the format: [width]x[height]."
+        + " The width or height may be left out, in which case it will be"
+        + " calculated to preserve the aspect ratio of the original image."
 );
 
 Option<string> resamplerOpt = new(
@@ -73,7 +73,8 @@ resamplerOpt = resamplerOpt.FromAmong(resamplerMap.Keys.ToArray());
 
 Option<int> frameOpt = new(
     new[] { "-f", "--frame" },
-    "Specify which frame number to output."
+    () => 0,
+    "Which frame number to output."
 );
 
 RootCommand root = new("Converts an image to ANSI art.");
