@@ -1,12 +1,23 @@
 ﻿using System.Text;
+using System.Reflection;
+using System.Collections.Immutable;
 using System.CommandLine;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
+using SixLabors.ImageSharp.Processing.Processors.Transforms;
 
 const char
     ANSI_ESC = '\x1b',
     UPPER_HALF_BLOCK = '\x2580';
+
+ImmutableDictionary<string, IResampler> resamplerMap = typeof(KnownResamplers)
+    .GetProperties(BindingFlags.Public | BindingFlags.Static)
+    .ToImmutableDictionary(
+        prop => prop.Name,
+        prop => (prop.GetValue(null) as IResampler) ?? throw new Exception("nope"),
+        StringComparer.OrdinalIgnoreCase
+    );
 
 Argument<FileInfo> fileArg = new();
 fileArg = fileArg.ExistingOnly();
@@ -53,6 +64,13 @@ Option<Size> sizeOpt = new(
         + "\ncalculated to preserve the aspect ratio of the original image."
 );
 
+Option<string> resamplerOpt = new(
+    new[] { "-r", "--resampler" },
+    () => nameof(KnownResamplers.NearestNeighbor),
+    "The resampler to use when resizing the image."
+);
+resamplerOpt = resamplerOpt.FromAmong(resamplerMap.Keys.ToArray());
+
 Option<int> frameOpt = new(
     new[] { "-f", "--frame" },
     "Specify which frame number to output."
@@ -61,17 +79,24 @@ Option<int> frameOpt = new(
 RootCommand root = new("Converts an image to ANSI art.");
 root.AddArgument(fileArg);
 root.AddOption(sizeOpt);
+root.AddOption(resamplerOpt);
 root.AddOption(frameOpt);
 
 root.SetHandler(
-    (file, size, frame) =>
+    (file, size, resamplerName, frame) =>
     {
         // Load the image from the specified path
         Image<Rgba32> image = Image.Load<Rgba32>(file.FullName);
 
         // Resize the image if width or height is specified
         if (size.Width > 0 || size.Height > 0)
-            image.Mutate(x => x.Resize(size));
+        {
+            image.Mutate(x => x.Resize(new ResizeOptions
+            {
+                Size = size,
+                Sampler = resamplerMap[resamplerName]
+            }));
+        }
 
         ImageFrame<Rgba32> imageFrame = image.Frames[frame];
 
@@ -113,7 +138,7 @@ root.SetHandler(
 
         Console.Write(sb.ToString());
     },
-    fileArg, sizeOpt, frameOpt
+    fileArg, sizeOpt, resamplerOpt, frameOpt
 );
 
 Command getFrameCountCmd = new("get-frame-count", "Get the number of frames contained within the image.");
