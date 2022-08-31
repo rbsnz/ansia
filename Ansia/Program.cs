@@ -15,7 +15,7 @@ ImmutableDictionary<string, IResampler> resamplerMap = typeof(KnownResamplers)
     .GetProperties(BindingFlags.Public | BindingFlags.Static)
     .ToImmutableDictionary(
         prop => prop.Name,
-        prop => (prop.GetValue(null) as IResampler) ?? throw new Exception("nope"),
+        prop => (IResampler)prop.GetValue(null)!,
         StringComparer.OrdinalIgnoreCase
     );
 
