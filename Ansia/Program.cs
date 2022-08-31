@@ -1,4 +1,5 @@
-﻿using System.CommandLine;
+﻿using System.Text;
+using System.CommandLine;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -75,6 +76,8 @@ root.SetHandler(
 
         ImageFrame<Rgba32> imageFrame = image.Frames[frame];
 
+        StringBuilder sb = new();
+
         // Iterate through pixel rows
         // Each cell displays 2 pixels:
         // - the foreground color for the top pixel (using the upper half block unicode character)
@@ -87,27 +90,29 @@ root.SetHandler(
                 Rgba32 c;
 
                 // Begin format escape sequence
-                Console.Write($"{ANSI_ESC}[");
+                sb.Append($"{ANSI_ESC}[");
                 // Check if this row has a bottom pixel row
                 if ((y + 1) < imageFrame.Height)
                 {
                     // Set background color (bottom pixel)
                     c = imageFrame[x, y + 1];
-                    Console.Write($"48;2;{c.R};{c.G};{c.B};");
+                    sb.Append($"48;2;{c.R};{c.G};{c.B};");
                 }
                 else
                 {
                     // Reset background to default
-                    Console.Write($"49;");
+                    sb.Append($"49;");
                 }
                 // Set foreground color (top pixel), end escape sequence and output the upper half block
                 c = imageFrame[x, y];
-                Console.Write($"38;2;{c.R};{c.G};{c.B}m");
-                Console.Write($"{UPPER_HALF_BLOCK}");
+                sb.Append($"38;2;{c.R};{c.G};{c.B}m");
+                sb.Append($"{UPPER_HALF_BLOCK}");
             }
             // Reset formatting
-            Console.WriteLine($"{ANSI_ESC}[0m");
+            sb.AppendLine($"{ANSI_ESC}[0m");
         }
+
+        Console.Write(sb.ToString());
     },
     fileArg, sizeOpt, frameOpt
 );
